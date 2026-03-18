@@ -58,19 +58,19 @@
         .module-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--sky-blue); }
         .btn-lets-go { background: var(--grass-green); color: white; font-family: 'Fredoka One'; font-size: 3.5rem; padding: 25px 80px; border: none; border-radius: 40px; box-shadow: 0 12px 0 #3d8b3d; cursor: pointer; }
 
-        /* --- OVERLAYS & POPUPS --- */
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; align-items: center; justify-content: center; }
-        .popup { background: white; padding: 40px; border-radius: 40px; border: 8px solid var(--sunny-yellow); text-align: center; max-width: 450px; animation: popIn 0.3s ease; position: relative; }
-        
-        /* --- CAMERA CAPTURE SCREEN --- */
+        /* --- CAMERA CAPTURE WINDOW --- */
         .cam-window { background: white; border-radius: 50px; padding: 30px; width: 90%; max-width: 800px; text-align: center; border: 10px solid var(--sky-blue); box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
-        #webcam-container { width: 448px; height: 448px; background: #000; border-radius: 30px; margin: 20px auto; border: 10px solid #333; overflow: hidden; }
-        #capture-status { font-family: 'Fredoka One'; font-size: 2.2rem; color: var(--text-navy); margin-top: 15px; padding: 10px; border-radius: 20px; }
+        #webcam-container { width: 448px; height: 448px; background: #000; border-radius: 30px; margin: 20px auto; border: 10px solid #333; overflow: hidden; position: relative; }
+        #capture-status { font-family: 'Fredoka One'; font-size: 2.2rem; color: var(--text-navy); margin-top: 15px; padding: 15px; border-radius: 20px; transition: 0.3s; min-height: 50px;}
 
         /* --- TRAINING WINDOW --- */
         .app-window { background: rgba(255,255,255,0.98); border-radius: 50px; height: 95%; width: 95%; max-width: 1200px; display: flex; flex-direction: column; border: 10px solid white; box-shadow: 0 30px 60px rgba(0,0,0,0.15); position: relative; z-index: 50; }
         .video-tv { background: #000; border: 10px solid var(--sky-blue); border-radius: 35px; overflow: hidden; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
         
+        /* --- OVERLAYS & POPUPS --- */
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; align-items: center; justify-content: center; }
+        .popup { background: white; padding: 40px; border-radius: 40px; border: 8px solid var(--sunny-yellow); text-align: center; max-width: 450px; animation: popIn 0.3s ease; position: relative; }
+
         /* --- ASSESSMENT (QUIZ) --- */
         #assessment { z-index: 200; }
         .quiz-container { width: 90%; max-width: 850px; background: white; border-radius: 50px; padding: 40px; border: 12px solid var(--sky-blue); text-align: center; position: relative; box-shadow: 0 20px 80px rgba(0,0,0,0.3); }
@@ -139,7 +139,7 @@
     <div id="captureMode" class="screen">
         <div class="cam-window">
             <h2 style="font-family:'Fredoka One'; color:var(--sky-blue); margin:0;">GUESTURE CAPTURE</h2>
-            <p style="font-weight:bold; color:#666;">Show your sign to the camera!</p>
+            <p style="font-weight:bold; color:#666;">Hold your sign steady for the camera!</p>
             <div id="webcam-container"></div>
             <div id="capture-status">No captured gesture</div>
             <button class="module-btn" style="margin-top:20px; background:var(--lava-orange); color:white; border:none; box-shadow:0 8px 0 #d35400;" onclick="closeCameraMode()">CLOSE CAMERA</button>
@@ -188,7 +188,7 @@
 <script>
     const DATA = {
         beginner: { 
-            desc: "Start your journey! You will learn the Alphabet ABCs, Numbers 1-10, and your very first basic words like Hello and Eat.",
+            desc: "Alphabet ABCs, Numbers 1-10, and first words.",
             titles: { 1: "Alphabet ABCs", 2: "Numbers 1-10", 3: "Basic Words" }, 
             videoCounts: { 1: 27, 2: 10, 3: 10 }, 
             assessments: { 
@@ -198,7 +198,7 @@
             } 
         },
         intermediate: { 
-            desc: "Dive deeper! Discover how to sign Emotions, master common Greetings, and learn Polite Expressions to talk with friends.",
+            desc: "Emotions, Greetings, and Polite Expressions.",
             titles: { 1: "Emotions", 2: "Greetings", 3: "Polite Expressions" }, 
             videoCounts: { 1: 10, 2: 10, 3: 10 }, 
             assessments: { 
@@ -208,7 +208,7 @@
             } 
         },
         advanced: { 
-            desc: "Master the Magic! You will learn how to build full Basic Phrases and ask important questions like 'Where do you live?'.",
+            desc: "Build full Basic Phrases and ask questions.",
             titles: { 1: "Basic Phrases" }, 
             videoCounts: { 1: 10 }, 
             assessments: { 
@@ -220,27 +220,11 @@
     let state = { level: null, currentModule: null, watchedItems: new Set(), lives: 3, currentQuestionIndex: 0, randomizedSet: [] };
     let model, webcam, isCamActive = false;
 
-    // --- SOUND ENGINE ---
-    function playMissionSound() {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, audioCtx.currentTime); 
-        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
-    }
-
-    // --- REAL-TIME CAPTURE ENGINE ---
+    // --- CAPTURE ENGINE ---
     async function openCameraMode() {
         showScreen('captureMode');
         const status = document.getElementById('capture-status');
-        status.innerText = "⌛ LOADING MAGIC...";
+        status.innerText = "⌛ INITIALIZING CAMERA...";
         
         try {
             if(!model) {
@@ -255,7 +239,7 @@
             isCamActive = true;
             window.requestAnimationFrame(loopCapture);
         } catch(e) {
-            alert("Error: Model files not found or camera blocked.");
+            alert("Model files not found or camera access denied.");
             showScreen('dashboard');
         }
     }
@@ -276,7 +260,7 @@
             if(p.probability > best.probability) best = p;
         });
 
-        // REVISED LOGIC: Only show word if accuracy is between 0.70 and 1.0 (70%+)
+        // UPDATE: Requirement for 70-80% accuracy logic
         if(best.probability >= 0.70 && best.className !== "NO DETECTION") {
             status.innerText = "Captured: " + best.className;
             status.style.background = "var(--grass-green)";
@@ -294,13 +278,12 @@
         showScreen('dashboard');
     }
 
-    // --- CORE LOGIC ---
+    // --- CORE NAVIGATION & UTILS ---
     function getSave() { return JSON.parse(localStorage.getItem("fsl_vfinal_v9")) || { beginner: {}, intermediate: {}, advanced: {} }; }
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        const target = document.getElementById(id);
-        target.classList.add('active');
+        document.getElementById(id).classList.add('active');
         if(id === 'dashboard') {
             updateDashboardStats();
             resetToLevelSelection();
@@ -317,11 +300,10 @@
         if(document.getElementById('welcome').classList.contains('active')) return;
         openPopup(`
             <div style="font-size: 80px;">🦁</div>
-            <h2 style="font-family:'Fredoka One'; color: var(--text-navy);">Go back to start?</h2>
-            <p style="font-weight: bold; color: #666;">Your session progress will be reset!</p>
+            <h2 style="font-family:'Fredoka One';">Go back to start?</h2>
             <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                <button class="module-btn" style="background: var(--locked-gray); box-shadow: 0 6px 0 #bbb; border:none;" onclick="closePopup()">NO</button>
-                <button class="module-btn" style="background: var(--lava-orange); color: white; box-shadow: 0 6px 0 #d35400; border:none;" onclick="confirmBack()">YES</button>
+                <button class="module-btn" onclick="closePopup()">NO</button>
+                <button class="module-btn" style="background: var(--lava-orange); color: white;" onclick="confirmBack()">YES</button>
             </div>
         `);
     }
@@ -329,17 +311,15 @@
 
     function previewLevel(lvl) {
         const icon = lvl==='beginner'?'🏔️':lvl==='intermediate'?'🌊':'🚀';
-        const color = lvl==='beginner'?'var(--border-beginner)':lvl==='intermediate'?'var(--border-inter)':'var(--border-adv)';
         openPopup(`
             <div style="font-size: 80px;">${icon}</div>
-            <h2 style="font-family:'Fredoka One'; color: ${color}; text-transform: uppercase;">${lvl} LEVEL</h2>
-            <p style="font-size: 1.2rem; line-height: 1.5; color: var(--text-navy);">${DATA[lvl].desc}</p>
+            <h2 style="font-family:'Fredoka One'; text-transform: uppercase;">${lvl} LEVEL</h2>
+            <p>${DATA[lvl].desc}</p>
             <button class="btn-lets-go" style="font-size: 1.5rem; padding: 15px 40px;" onclick="confirmLevelSelection('${lvl}')">START MISSION!</button>
         `);
     }
 
     function confirmLevelSelection(lvl) {
-        playMissionSound();
         closePopup();
         state.level = lvl;
         document.querySelector('.level-hub').style.display = 'none';
@@ -376,25 +356,6 @@
         });
     }
 
-    function goToDashboard() { showScreen('dashboard'); }
-
-    function openGallery() {
-        showScreen('gallery');
-        const grid = document.getElementById("badgeGrid");
-        const save = getSave();
-        grid.innerHTML = "";
-        ['beginner', 'intermediate', 'advanced'].forEach(lvl => {
-            Object.keys(DATA[lvl].titles).forEach(mId => {
-                const isEarned = save[lvl][mId];
-                const badge = document.createElement("div");
-                badge.className = `badge ${isEarned ? 'earned' : ''}`;
-                const icon = lvl==='beginner'?'🏔️':lvl==='intermediate'?'🌊':'🚀';
-                badge.innerHTML = `<span style="font-size:55px">${icon}</span><br><b style="display:block; margin-top:10px;">${DATA[lvl].titles[mId]}</b>`;
-                grid.appendChild(badge);
-            });
-        });
-    }
-
     function startTraining(m) {
         state.currentModule = m; 
         state.watchedItems = new Set(); 
@@ -404,7 +365,6 @@
         const quizBtn = document.getElementById("assessmentBtn");
         
         quizBtn.style.background = "var(--locked-gray)"; 
-        quizBtn.style.boxShadow = "0 6px 0 #ccc";
         quizBtn.innerText = "WATCH ALL LESSONS ⭐"; 
         quizBtn.onclick = null;
         quizBtn.style.cursor = "not-allowed";
@@ -412,10 +372,11 @@
         const count = DATA[state.level].videoCounts[m];
         for(let i=1; i<=count; i++) {
             const card = document.createElement("div");
-            card.style = "background:white; border-radius:15px; margin-bottom:10px; padding:15px; display:flex; justify-content:space-between; border:3px solid #eee; cursor:pointer; font-weight:bold; transition: 0.2s;";
+            card.style = "background:white; border-radius:15px; margin-bottom:10px; padding:15px; display:flex; justify-content:space-between; border:3px solid #eee; cursor:pointer; font-weight:bold;";
             card.innerHTML = `<span>Lesson ${i}</span> <span class='status-icon'>⚪</span>`;
             card.onclick = function() {
                 const folder = state.level === 'advanced' ? 'hard' : state.level;
+                // Pathing must be lowercase to match GitHub environment
                 const videoUrl = `videos/${folder}/module${m}_video${i}.mp4`;
                 document.getElementById("videoPlayer").src = videoUrl;
                 document.getElementById("videoPlayer").play();
@@ -426,7 +387,6 @@
                     quizBtn.style.background = "var(--sunny-yellow)"; 
                     quizBtn.style.color = "var(--text-navy)"; 
                     quizBtn.style.cursor = "pointer";
-                    quizBtn.style.boxShadow = "0 8px 0 #d4af37";
                     quizBtn.innerText = "START QUIZ! 🏆"; 
                     quizBtn.onclick = startQuiz;
                 }
@@ -468,15 +428,31 @@
                     const save = getSave();
                     save[state.level][state.currentModule] = true;
                     localStorage.setItem("fsl_vfinal_v9", JSON.stringify(save));
-                    alert("YAY! You are a superstar! 🦁✨ Check your new badge!");
+                    alert("YAY! You are a superstar! 🦁✨");
                     openGallery();
                 } else { loadQuestion(); }
             }, 800);
         } else {
             state.lives--; updateStars();
-            if(state.lives <= 0) { alert("Oh no! Let's go back and study!"); showScreen('module'); }
-            else { alert("Almost! Try again! 🦁"); }
+            if(state.lives <= 0) { alert("Let's go back and study!"); showScreen('module'); }
+            else { alert("Try again! 🦁"); }
         }
+    }
+
+    function goToDashboard() { showScreen('dashboard'); }
+    function openGallery() {
+        showScreen('gallery');
+        const grid = document.getElementById("badgeGrid");
+        const save = getSave(); grid.innerHTML = "";
+        ['beginner', 'intermediate', 'advanced'].forEach(lvl => {
+            Object.keys(DATA[lvl].titles).forEach(mId => {
+                const isEarned = save[lvl][mId];
+                const badge = document.createElement("div");
+                badge.className = `badge ${isEarned ? 'earned' : ''}`;
+                badge.innerHTML = `<span style="font-size:55px">${lvl==='beginner'?'🏔️':lvl==='intermediate'?'🌊':'🚀'}</span><br><b>${DATA[lvl].titles[mId]}</b>`;
+                grid.appendChild(badge);
+            });
+        });
     }
 
     updateDashboardStats();
