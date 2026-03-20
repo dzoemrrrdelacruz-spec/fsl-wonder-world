@@ -33,19 +33,13 @@
         header { position: relative; z-index: 20; background: white; padding: 15px 0; border-bottom: 8px solid var(--sunny-yellow); text-align: center; border-radius: 0 0 40px 40px; display: flex; align-items: center; justify-content: center; gap: 20px; }
         header h1 { font-family: 'Fredoka One'; font-size: 2.5rem; margin: 0; color: var(--sky-blue); cursor: pointer; }
 
-        /* --- GLOBAL 3D BUTTON STYLE --- */
-        .nav-label, .module-btn, .btn-lets-go, .btn-check-quiz, .badge-btn {
-            font-family: 'Fredoka One';
-            cursor: pointer;
-            transition: all 0.1s ease;
-            text-transform: uppercase;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+        /* --- GLOBAL 3D BUTTONS --- */
+        .nav-label, .module-btn, .btn-lets-go, .btn-check-quiz {
+            font-family: 'Fredoka One'; cursor: pointer; transition: all 0.1s ease;
+            text-transform: uppercase; border: none; display: inline-flex;
+            align-items: center; justify-content: center;
         }
 
-        /* Nav Labels (Header) */
         .nav-label { 
             font-size: 1.1rem; color: var(--sky-blue); padding: 8px 15px; 
             background: white; border: 3px solid var(--sky-blue); border-radius: 15px; 
@@ -54,7 +48,6 @@
         .nav-label:hover { box-shadow: 0 0 15px var(--sky-blue); }
         .nav-label:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--sky-blue); }
 
-        /* Awards Button */
         .trophy-text { 
             position: absolute; right: 30px; top: 22px; font-family: 'Fredoka One'; 
             font-size: 1.2rem; cursor: pointer; transition: 0.2s; z-index: 100; 
@@ -65,7 +58,6 @@
         .trophy-text:hover { box-shadow: 0 0 20px var(--sunny-yellow); transform: translateY(-2px); }
         .trophy-text:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--sunny-yellow); }
 
-        /* General Module Buttons */
         .module-btn { 
             background: white; border: 4px solid var(--sky-blue); padding: 15px 35px; 
             border-radius: 25px; font-size: 1.4rem; color: var(--sky-blue);
@@ -74,7 +66,7 @@
         .module-btn:hover { box-shadow: 0 0 20px var(--sky-blue); }
         .module-btn:active { transform: translateY(6px); box-shadow: 0 2px 0 var(--sky-blue); }
 
-        /* --- DASHBOARD CARDS --- */
+        /* --- DASHBOARD --- */
         .level-hub { display: flex; gap: 25px; width: 95%; max-width: 1200px; justify-content: center; margin-bottom: 30px; }
         .level-card { flex: 1; border-radius: 45px; padding: 30px 20px; text-align: center; cursor: pointer; transition: 0.3s; border: 8px solid white; position: relative; }
         
@@ -90,7 +82,13 @@
         #card-advanced:hover { transform: translateY(-5px); box-shadow: 0 0 30px var(--border-adv); }
         #card-advanced:active { transform: translateY(10px); box-shadow: 0 2px 0 var(--border-adv); }
 
-        /* --- ASSESSMENT & QUIZ --- */
+        /* --- CAPTURE STATUS LOGIC --- */
+        #capture-status { font-family: 'Fredoka One'; font-size: 2.5rem; margin-top: 15px; min-height: 60px; transition: 0.3s; }
+        .status-thinking { color: #aaa; animation: pulseThinking 1.5s infinite; }
+        .status-found { color: var(--grass-green); transform: scale(1.1); text-shadow: 0 0 15px rgba(92, 214, 92, 0.4); }
+        @keyframes pulseThinking { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        /* --- ASSESSMENT --- */
         .quiz-container { width: 95%; max-width: 850px; background: white; border-radius: 50px; padding: 30px; border: 12px solid var(--sky-blue); text-align: center; position: relative; box-shadow: 0 20px 80px rgba(0,0,0,0.3); }
         .quiz-video-box { background:#000; border-radius:25px; overflow:hidden; width:100%; max-width:650px; aspect-ratio:16/9; margin:15px auto; border:10px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         
@@ -100,22 +98,14 @@
             margin-bottom: 20px; outline: none; box-shadow: inset 0 4px 8px rgba(0,0,0,0.1);
         }
 
-        .btn-check-quiz {
-            background: var(--grass-green); color: white; font-size: 1.8rem; 
-            padding: 15px 50px; border-radius: 25px; box-shadow: 0 8px 0 #3d8b3d; 
-        }
+        .btn-check-quiz { background: var(--grass-green); color: white; font-size: 1.8rem; padding: 15px 50px; border-radius: 25px; box-shadow: 0 8px 0 #3d8b3d; }
         .btn-check-quiz:hover { box-shadow: 0 0 25px var(--grass-green); }
         .btn-check-quiz:active { transform: translateY(6px); box-shadow: 0 2px 0 #3d8b3d; }
 
-        /* Big Welcome Button */
-        .btn-lets-go { 
-            background: var(--grass-green); color: white; font-size: 3.5rem; 
-            padding: 25px 80px; border-radius: 40px; box-shadow: 0 12px 0 #3d8b3d; 
-        }
+        .btn-lets-go { background: var(--grass-green); color: white; font-size: 3.5rem; padding: 25px 80px; border-radius: 40px; box-shadow: 0 12px 0 #3d8b3d; }
         .btn-lets-go:hover { box-shadow: 0 0 40px var(--grass-green); }
         .btn-lets-go:active { transform: translateY(10px); box-shadow: 0 2px 0 #3d8b3d; }
 
-        /* Progress & Badges */
         .progress-container { width: 100%; background: rgba(255,255,255,0.5); border-radius: 15px; height: 18px; margin: 15px 0; overflow: hidden; }
         .progress-bar { height: 100%; width: 0%; transition: width 0.6s ease; }
         .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; margin-top: 20px; max-height: 400px; overflow-y: auto; }
@@ -127,8 +117,6 @@
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         #webcam-container { width: 448px; height: 448px; background: #000; border-radius: 30px; margin: 20px auto; border: 10px solid #333; overflow: hidden; }
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 300; align-items: center; justify-content: center; }
-        .popup { background: white; padding: 40px; border-radius: 40px; border: 8px solid var(--sunny-yellow); text-align: center; max-width: 450px; animation: popIn 0.3s ease; }
     </style>
 </head>
 <body>
@@ -174,16 +162,16 @@
         </div>
 
         <div style="display: flex; gap: 15px; margin-top: 20px;">
-            <button id="cameraAccessBtn" class="module-btn" style="background: var(--magic-purple); color: white; border-color: #8a81f3; box-shadow: 0 8px 0 #6c5ce7;" onclick="openCameraMode()">SIGNING CAMERA</button>
+            <button class="module-btn" style="background: var(--magic-purple); color: white; border-color: #8a81f3; box-shadow: 0 8px 0 #6c5ce7;" onclick="openCameraMode()">SIGNING CAMERA</button>
             <button class="module-btn" style="border-color:#ccc; box-shadow:0 8px 0 #ccc; color: #777;" onclick="askConfirmBack()">◀ RESET SESSION</button>
         </div>
     </div>
 
     <div id="captureMode" class="screen">
-        <div style="background: white; border-radius: 50px; padding: 30px; width: 90%; max-width: 800px; text-align: center; border: 10px solid var(--sky-blue);">
+        <div style="background: white; border-radius: 50px; padding: 30px; width: 90%; max-width: 800px; text-align: center; border: 10px solid var(--sky-blue); box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
             <h2 style="font-family:'Fredoka One'; color:var(--sky-blue); margin:0;">SIGN SCANNER</h2>
             <div id="webcam-container"></div>
-            <div id="capture-status" style="font-family:'Fredoka One'; font-size: 2.2rem;">READY</div>
+            <div id="capture-status" class="status-thinking">THINKING...</div>
             <button class="module-btn" style="background:var(--lava-orange); color:white; border-color:#d35400; box-shadow:0 8px 0 #d35400;" onclick="closeCameraMode()">EXIT CAMERA</button>
         </div>
     </div>
@@ -266,19 +254,34 @@
 
     async function openCameraMode() {
         showScreen('captureMode');
+        const statusDiv = document.getElementById('capture-status');
+        statusDiv.innerText = "THINKING...";
+        statusDiv.className = "status-thinking";
         try {
             if(!model) model = await tmImage.load("./model.json", "./metadata.json");
             if(!webcam) { webcam = new tmImage.Webcam(448, 448, true); await webcam.setup(); document.getElementById("webcam-container").appendChild(webcam.canvas); }
             await webcam.play(); isCamActive = true; window.requestAnimationFrame(loopCapture);
-        } catch(e) { alert("Camera Error"); showScreen('dashboard'); }
+        } catch(e) { alert("Camera Access Required"); showScreen('dashboard'); }
     }
 
     async function loopCapture() {
-        if(!isCamActive) return; webcam.update();
+        if(!isCamActive) return; 
+        webcam.update();
         const prediction = await model.predict(webcam.canvas);
+        const statusDiv = document.getElementById('capture-status');
+        
         let best = { className: "", probability: 0 };
         prediction.forEach(p => { if(p.probability > best.probability) best = p; });
-        document.getElementById('capture-status').innerText = best.probability >= 0.75 ? "SIGN: " + best.className : "READY";
+
+        // Logic: Only show text if accuracy is 75% or higher (avg of 70-80)
+        if(best.probability >= 0.75) {
+            statusDiv.innerText = "SIGN: " + best.className;
+            statusDiv.className = "status-found";
+        } else {
+            statusDiv.innerText = "THINKING...";
+            statusDiv.className = "status-thinking";
+        }
+        
         window.requestAnimationFrame(loopCapture);
     }
 
