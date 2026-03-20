@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FSL Wonder-World: LCD Fix</title>
+    <title>FSL Wonder-World: Adventure & Sign Capture</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -13,14 +13,17 @@
         :root {
             --sky-blue: #4db8ff; --sunny-yellow: #ffdb4d; --grass-green: #5cd65c;
             --text-navy: #003366; --magic-purple: #a29bfe; --lava-orange: #ff7f50;
-            --locked-gray: #dfe6e9;
+            --locked-gray: #dfe6e9; --bg-beginner: #e8f8f5; --border-beginner: #27ae60;
+            --bg-inter: #ebf5fb; --border-inter: #2980b9; --bg-adv: #fdf2e9; --border-adv: #e67e22;
         }
 
+        /* LCD Fix: Allow scrolling & responsive height */
         body, html {
             margin: 0; padding: 0; min-height: 100vh; width: 100vw;
             overflow-x: hidden; overflow-y: auto; 
             font-family: 'Quicksand', sans-serif;
-            background: #E0F7FA; color: var(--text-navy);
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
+            color: var(--text-navy);
         }
 
         header { 
@@ -28,203 +31,235 @@
             padding: 10px; border-bottom: 5px solid var(--sunny-yellow); 
             display: flex; align-items: center; justify-content: space-between;
         }
+        header h1 { font-family: 'Fredoka One'; font-size: 1.4rem; color: var(--sky-blue); margin: 0; }
 
         .screen { 
             display: none; padding: 15px; box-sizing: border-box; 
-            width: 100%; min-height: calc(100vh - 70px); 
-            flex-direction: column; align-items: center;
+            width: 100%; min-height: calc(100vh - 80px); 
+            position: relative; z-index: 15; flex-direction: column; align-items: center;
         }
         .screen.active { display: flex; }
 
-        .app-window { 
-            background: white; border-radius: 25px; width: 100%; 
-            max-width: 1000px; border: 5px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        /* Level Hub: Text-Based Cards */
+        .level-hub { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 15px; width: 100%; max-width: 1000px; margin-top: 20px;
         }
+        .level-card { 
+            background: white; border-radius: 25px; padding: 25px 15px; 
+            text-align: center; border: 5px solid white; transition: 0.3s; cursor: pointer;
+        }
+        .level-card h3 { font-family: 'Fredoka One'; margin: 10px 0; font-size: 1.2rem; }
+        
+        #card-beginner { background: var(--bg-beginner); box-shadow: 0 8px 0 var(--border-beginner); }
+        #card-intermediate { background: var(--bg-inter); box-shadow: 0 8px 0 var(--border-inter); }
+        #card-advanced { background: var(--bg-adv); box-shadow: 0 8px 0 var(--border-adv); }
 
-        .video-tv { background: #000; border-radius: 20px; overflow: hidden; aspect-ratio: 16/9; width: 100%; }
+        /* Webcam Container optimized for 7x5 LCD */
+        .cam-window { 
+            background: white; border-radius: 30px; padding: 15px; 
+            width: 95%; max-width: 500px; border: 6px solid var(--sky-blue);
+        }
+        #webcam-container { 
+            width: 280px; height: 280px; background: #000; 
+            border-radius: 20px; margin: 10px auto; border: 5px solid #333; 
+            overflow: hidden;
+        }
+        #webcam-container canvas { width: 100% !important; height: auto !important; }
+
+        /* Training Layout */
+        .app-window { 
+            background: white; border-radius: 30px; width: 100%; 
+            max-width: 1100px; border: 5px solid white; display: flex; flex-direction: column;
+        }
+        .training-grid { 
+            display: grid; grid-template-columns: 1fr; gap: 15px; padding: 15px; 
+        }
+        @media (min-width: 800px) { .training-grid { grid-template-columns: 1.5fr 1fr; } }
+
+        .video-tv { background: #000; border-radius: 20px; overflow: hidden; aspect-ratio: 16/9; }
         
         .module-btn { 
-            background: white; border: 3px solid var(--sky-blue); padding: 15px; 
+            background: white; border: 3px solid var(--sky-blue); padding: 12px 20px; 
             border-radius: 20px; font-family: 'Fredoka One'; font-size: 1.1rem; 
             cursor: pointer; box-shadow: 0 5px 0 var(--sky-blue); margin: 5px;
-            user-select: none; /* Prevents text selection on long press */
+            text-transform: uppercase;
         }
 
+        /* Lesson Item tracking */
         .lesson-item {
             padding: 12px; border-radius: 15px; border: 2px solid #eee; margin-bottom: 8px;
-            display: flex; justify-content: space-between; background: white; font-weight: bold;
+            display: flex; justify-content: space-between; cursor: pointer; background: white;
+            font-weight: bold; font-size: 0.9rem;
         }
         .lesson-item.watched { border-color: var(--grass-green); background: #f0fff0; }
+        .status-text { font-size: 0.7rem; text-transform: uppercase; }
 
-        #assessmentBtn.ready { 
-            background: var(--sunny-yellow) !important; 
-            color: var(--text-navy) !important; 
-            box-shadow: 0 5px 0 #d4af37 !important; 
-            cursor: pointer !important;
-        }
-
-        /* Quiz Box */
-        .quiz-box {
-            background: white; padding: 20px; border-radius: 30px; border: 8px solid var(--sky-blue);
-            width: 90%; max-width: 600px; text-align: center;
-        }
+        #assessmentBtn { width: 100%; transition: 0.3s; margin-top: 10px; border: none; }
+        #assessmentBtn.ready { background: var(--sunny-yellow); box-shadow: 0 5px 0 #d4af37; cursor: pointer; color: var(--text-navy); }
     </style>
 </head>
 <body>
 
     <header>
-        <div onclick="showScreen('dashboard')" style="font-size: 35px; cursor: pointer;">🦁</div>
-        <h1 style="font-family:'Fredoka One'; color: var(--sky-blue); font-size: 1.2rem; margin:0;">FSL WONDER-WORLD</h1>
-        <div style="font-size: 30px;">🏆</div>
+        <button class="module-btn" style="padding: 5px 15px; font-size: 0.8rem;" onclick="askConfirmBack()">HOME</button>
+        <h1>FSL WONDER-WORLD</h1>
+        <button class="module-btn" style="padding: 5px 15px; font-size: 0.8rem; background: var(--sunny-yellow);" onclick="openGallery()">AWARDS</button>
     </header>
 
-    <div id="dashboard" class="screen active">
-        <div id="levelSelection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
-            <button class="module-btn" onclick="loadModules('beginner')">🏔️ BEGINNER</button>
-            <button class="module-btn" onclick="loadModules('intermediate')">🌊 INTER</button>
-            <button class="module-btn" onclick="loadModules('advanced')">🚀 ADVANCED</button>
-            <button class="module-btn" style="background:var(--magic-purple); color:white;" onclick="showScreen('captureMode')">📷 CAMERA</button>
-        </div>
-        <div id="moduleList" style="margin-top:20px; display:none; width:100%;"></div>
+    <div id="welcome" class="screen active">
+        <h1 style="font-family: 'Fredoka One'; font-size: 3rem; color: white; text-shadow: 2px 2px var(--sky-blue);">SIGN LANGUAGE ADVENTURE</h1>
+        <button class="module-btn" style="font-size: 2rem; padding: 20px 60px; background: var(--grass-green); color: white; border: none; box-shadow: 0 8px 0 #3d8b3d;" onclick="goToDashboard()">START JOURNEY</button>
     </div>
 
-    <div id="trainingScreen" class="screen">
-        <div class="app-window">
-            <div style="padding:15px;">
-                <div class="video-tv"><video id="videoPlayer" controls style="width:100%; height:100%;"></video></div>
-                <h3 id="trainTitle" style="text-align:center;">Lesson</h3>
-                <div id="lessonList" style="max-height: 200px; overflow-y: auto; margin: 10px 0;"></div>
-                <button id="assessmentBtn" class="module-btn" style="width:100%; background:var(--locked-gray); color:#999;" disabled>WATCH ALL TO START ⭐</button>
-                <button class="module-btn" style="width:100%; border-color:#ccc;" onclick="showScreen('dashboard')">◀ BACK TO MAP</button>
+    <div id="dashboard" class="screen">
+        <div class="level-hub">
+            <div class="level-card" id="card-beginner" onclick="previewLevel('beginner')">
+                <h3>LEVEL: BEGINNER</h3>
+                <p>Learn the basics</p>
+            </div>
+            <div class="level-card" id="card-intermediate" onclick="previewLevel('intermediate')">
+                <h3>LEVEL: INTERMEDIATE</h3>
+                <p>Common phrases</p>
+            </div>
+            <div class="level-card" id="card-advanced" onclick="previewLevel('advanced')">
+                <h3>LEVEL: ADVANCED</h3>
+                <p>Master communication</p>
             </div>
         </div>
-    </div>
+        
+        <div id="moduleSelectionArea" style="display:none; width: 100%; text-align: center;">
+            <h2 id="currentLevelLabel" style="font-family:'Fredoka One';">MISSIONS</h2>
+            <div id="moduleList" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+            <button class="module-btn" style="border-color:#ccc; box-shadow: 0 5px 0 #ccc;" onclick="resetToLevelSelection()">BACK TO LEVELS</button>
+        </div>
 
-    <div id="quizScreen" class="screen">
-        <div class="quiz-box">
-            <h2 style="font-family:'Fredoka One'; color:var(--text-navy);">QUIZ TIME!</h2>
-            <div class="video-tv" style="margin-bottom:15px;"><video id="quizVideo" controls style="width:100%; height:100%;"></video></div>
-            <input type="text" id="quizInput" placeholder="Type sign here..." style="width:80%; padding:15px; border-radius:15px; border:3px solid var(--sky-blue); font-size:1.2rem; text-align:center;">
-            <br><br>
-            <button class="module-btn" style="background:var(--grass-green); color:white; width:80%;" onclick="checkQuizAnswer()">SUBMIT ANSWER</button>
+        <div style="margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: center;">
+            <button class="module-btn" style="background: var(--magic-purple); color: white;" onclick="openCameraMode()">OPEN SIGNING CAMERA</button>
         </div>
     </div>
 
     <div id="captureMode" class="screen">
-        <div class="app-window" style="padding:20px; text-align:center;">
-            <div id="webcam-container" style="width:280px; height:280px; margin:0 auto; background:#000; border-radius:20px; overflow:hidden;"></div>
-            <div id="capture-status" style="font-family:'Fredoka One'; margin-top:15px; padding:10px; border-radius:15px; font-size:1.5rem;">No gesture</div>
-            <button class="module-btn" style="background:var(--lava-orange); color:white;" onclick="location.reload()">CLOSE CAMERA</button>
+        <div class="cam-window">
+            <h2 style="font-family:'Fredoka One'; margin:0;">SIGN CAPTURE</h2>
+            <div id="webcam-container"></div>
+            <div id="capture-status" style="font-family:'Fredoka One'; padding:10px; border-radius:15px; margin: 10px 0;">READY TO SCAN</div>
+            <button class="module-btn" style="background:var(--lava-orange); color:white; border:none;" onclick="closeCameraMode()">EXIT CAMERA</button>
+        </div>
+    </div>
+
+    <div id="module" class="screen">
+        <div class="app-window">
+            <div style="padding: 10px; border-bottom: 2px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                <button class="module-btn" style="padding: 5px 15px; font-size: 0.8rem;" onclick="showScreen('dashboard')">MAP</button>
+                <h2 id="moduleTitle" style="font-family:'Fredoka One'; margin:0; font-size: 1.1rem; color: var(--sky-blue);">LESSON</h2>
+                <div style="width: 60px;"></div> </div>
+            <div class="training-grid">
+                <div>
+                    <div class="video-tv"><video id="videoPlayer" controls style="width:100%; height:100%;"></video></div>
+                </div>
+                <div style="background: #f8fbff; border-radius: 20px; padding: 10px; max-height: 300px; display: flex; flex-direction: column;">
+                    <div id="videoList" style="overflow-y: auto; flex: 1; padding-right: 5px;"></div>
+                    <button id="assessmentBtn" class="module-btn" style="background:var(--locked-gray); color: #888;" disabled>LOCKED: WATCH ALL</button>
+                </div>
+            </div>
         </div>
     </div>
 
 <script>
     const DATA = {
-        beginner: { 1: "Alphabet ABCs", 2: "Numbers 1-10", 3: "Basic Words" },
-        intermediate: { 1: "Emotions", 2: "Greetings", 3: "Polite Expressions" },
-        advanced: { 1: "Basic Phrases" }
+        beginner: { titles: { 1: "Alphabet ABCs", 2: "Numbers 1-10", 3: "Basic Words" }, videoCounts: { 1: 27, 2: 10, 3: 10 } },
+        intermediate: { titles: { 1: "Emotions", 2: "Greetings", 3: "Polite Expressions" }, videoCounts: { 1: 10, 2: 10, 3: 10 } },
+        advanced: { titles: { 1: "Basic Phrases" }, videoCounts: { 1: 10 } }
     };
-    const VIDEO_COUNTS = { beginner: { 1: 27, 2: 10, 3: 10 }, intermediate: { 1: 10, 2: 10, 3: 10 }, advanced: { 1: 10 } };
 
-    let state = { level: '', module: 0, watched: new Set() };
-    let model, webcam;
+    let state = { level: null, currentModule: null, watchedItems: new Set() };
+    let model, webcam, isCamActive = false;
 
+    // --- NAVIGATION ---
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(id === 'captureMode') startCamera();
+        window.scrollTo(0,0);
     }
 
-    function loadModules(lvl) {
+    function goToDashboard() { showScreen('dashboard'); }
+
+    function previewLevel(lvl) {
         state.level = lvl;
+        document.querySelector('.level-hub').style.display = 'none';
+        const modArea = document.getElementById('moduleSelectionArea');
         const list = document.getElementById('moduleList');
-        list.innerHTML = `<h2 style="text-align:center">${lvl.toUpperCase()}</h2>`;
-        Object.keys(DATA[lvl]).forEach(id => {
-            const btn = document.createElement('button');
-            btn.className = 'module-btn';
-            btn.style.width = '100%';
-            btn.innerText = DATA[lvl][id];
-            btn.onclick = () => startTraining(id);
+        modArea.style.display = 'block';
+        list.innerHTML = "";
+        document.getElementById('currentLevelLabel').innerText = lvl.toUpperCase() + " MISSIONS";
+        Object.keys(DATA[lvl].titles).forEach(mId => {
+            const btn = document.createElement("button");
+            btn.className = "module-btn";
+            btn.innerText = DATA[lvl].titles[mId];
+            btn.onclick = () => startTraining(mId);
             list.appendChild(btn);
         });
-        document.getElementById('levelSelection').style.display = 'none';
-        list.style.display = 'block';
     }
 
-    function startTraining(modId) {
-        state.module = modId;
-        state.watched = new Set();
-        document.getElementById('trainTitle').innerText = DATA[state.level][modId];
-        const list = document.getElementById('lessonList');
+    function resetToLevelSelection() {
+        document.querySelector('.level-hub').style.display = 'grid';
+        document.getElementById('moduleSelectionArea').style.display = 'none';
+    }
+
+    // --- TRAINING LOGIC ---
+    function startTraining(m) {
+        state.currentModule = m;
+        state.watchedItems = new Set();
+        showScreen('module');
+        
+        const qBtn = document.getElementById("assessmentBtn");
+        qBtn.disabled = true;
+        qBtn.innerText = "LOCKED: WATCH ALL";
+        qBtn.classList.remove("ready");
+        qBtn.style.background = "var(--locked-gray)";
+
+        document.getElementById("moduleTitle").innerText = DATA[state.level].titles[m];
+        const list = document.getElementById("videoList"); 
         list.innerHTML = "";
         
-        const count = VIDEO_COUNTS[state.level][modId];
+        const count = DATA[state.level].videoCounts[m];
         for(let i=1; i<=count; i++) {
-            const div = document.createElement('div');
-            div.className = 'lesson-item';
-            div.id = `item-${i}`;
-            div.innerHTML = `<span>Lesson ${i}</span> <span class="status">⚪</span>`;
-            div.onclick = () => {
+            const item = document.createElement("div");
+            item.className = "lesson-item";
+            item.id = `lesson-${i}`;
+            item.innerHTML = `<span>LESSON ${i}</span> <span class="status-text">UNWATCHED</span>`;
+            item.onclick = () => {
                 const folder = state.level === 'advanced' ? 'hard' : state.level;
-                document.getElementById('videoPlayer').src = `videos/${folder}/module${modId}_video${i}.mp4`;
-                document.getElementById('videoPlayer').play();
+                document.getElementById("videoPlayer").src = `videos/${folder}/module${m}_video${i}.mp4`;
+                document.getElementById("videoPlayer").play();
                 
-                state.watched.add(i);
-                div.classList.add('watched');
-                div.querySelector('.status').innerText = "✅";
-                updateQuizButton(count);
+                state.watchedItems.add(i);
+                item.classList.add("watched");
+                item.querySelector(".status-text").innerText = "COMPLETED";
+                checkProgress(count);
             };
-            list.appendChild(div);
+            list.appendChild(item);
         }
-        
-        // Setup Quiz Button
-        const qBtn = document.getElementById('assessmentBtn');
-        qBtn.disabled = true;
-        qBtn.innerText = "WATCH ALL TO START ⭐";
-        qBtn.classList.remove('ready');
-
-        // HIDDEN FEATURE: Long press 3 seconds to force unlock if Pi fails
-        let pressTimer;
-        qBtn.onmousedown = () => { pressTimer = window.setTimeout(() => { unlockQuiz(); }, 3000); };
-        qBtn.onmouseup = () => { clearTimeout(pressTimer); };
-        qBtn.ontouchstart = () => { pressTimer = window.setTimeout(() => { unlockQuiz(); }, 3000); };
-        qBtn.ontouchend = () => { clearTimeout(pressTimer); };
-
-        showScreen('trainingScreen');
     }
 
-    function updateQuizButton(total) {
-        const qBtn = document.getElementById('assessmentBtn');
-        if(state.watched.size >= total) {
-            unlockQuiz();
+    function checkProgress(total) {
+        const qBtn = document.getElementById("assessmentBtn");
+        if(state.watchedItems.size >= total) {
+            qBtn.disabled = false;
+            qBtn.innerText = "START QUIZ NOW";
+            qBtn.classList.add("ready");
+            qBtn.style.background = "var(--sunny-yellow)";
+            qBtn.onclick = () => alert("Switching to Quiz Mode...");
         } else {
-            qBtn.innerText = `${state.watched.size}/${total} WATCHED`;
+            qBtn.innerText = `PROGRESS: ${state.watchedItems.size}/${total}`;
         }
     }
 
-    function unlockQuiz() {
-        const qBtn = document.getElementById('assessmentBtn');
-        qBtn.disabled = false;
-        qBtn.classList.add('ready');
-        qBtn.innerText = "START QUIZ NOW! 🏆";
-        qBtn.onclick = () => {
-            const folder = state.level === 'advanced' ? 'hard' : state.level;
-            // Load the first quiz video
-            document.getElementById('quizVideo').src = `videos/${folder}/module${state.module}_test1.mp4`;
-            showScreen('quizScreen');
-            document.getElementById('quizVideo').play();
-        };
-    }
-
-    function checkQuizAnswer() {
-        alert("Great job! Badge earned! 🏆");
-        showScreen('dashboard');
-        location.reload(); // Reset for next mission
-    }
-
-    // CAMERA LOGIC
-    async function startCamera() {
-        const status = document.getElementById('capture-status');
+    // --- CAMERA ENGINE ---
+    async function openCameraMode() {
+        showScreen('captureMode');
+        document.getElementById('capture-status').innerText = "LOADING ENGINE...";
         try {
             if(!model) model = await tmImage.load("./model.json", "./metadata.json");
             if(!webcam) {
@@ -232,29 +267,35 @@
                 await webcam.setup();
                 document.getElementById("webcam-container").appendChild(webcam.canvas);
             }
-            webcam.play();
-            predictLoop();
-        } catch(e) { alert("Camera failed"); }
+            await webcam.play();
+            isCamActive = true;
+            loop();
+        } catch(e) { alert("Camera system error."); closeCameraMode(); }
     }
 
-    async function predictLoop() {
+    async function loop() {
+        if(!isCamActive) return;
         webcam.update();
-        const pred = await model.predict(webcam.canvas);
-        let best = { className: "", probability: 0 };
-        pred.forEach(p => { if(p.probability > best.probability) best = p; });
-
+        const prediction = await model.predict(webcam.canvas);
         const status = document.getElementById('capture-status');
+        let best = { className: "", probability: 0 };
+        prediction.forEach(p => { if(p.probability > best.probability) best = p; });
+
         if(best.probability >= 0.70 && best.className !== "NO DETECTION") {
             status.innerText = "CAPTURED: " + best.className;
             status.style.background = "var(--grass-green)";
             status.style.color = "white";
         } else {
-            status.innerText = "No gesture";
+            status.innerText = "SEARCHING...";
             status.style.background = "none";
             status.style.color = "var(--text-navy)";
         }
-        window.requestAnimationFrame(predictLoop);
+        window.requestAnimationFrame(loop);
     }
+
+    function closeCameraMode() { isCamActive = false; if(webcam) webcam.stop(); showScreen('dashboard'); }
+    function askConfirmBack() { if(confirm("Return to start?")) showScreen('welcome'); }
+    function openGallery() { alert("Awards feature coming soon!"); }
 </script>
 </body>
 </html>
