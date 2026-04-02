@@ -230,7 +230,6 @@
     let state = { level: null, currentModule: null, watchedItems: new Set(), lives: 3, currentQuestionIndex: 0, randomizedSet: [] };
     let model, webcam, isCamActive = false;
 
-    // Helper to get correct folder path
     function getFolderPath(lvl) {
         return lvl === 'advanced' ? 'hard' : lvl;
     }
@@ -238,13 +237,27 @@
     async function openCameraMode() {
         showScreen('captureMode');
         const statusDiv = document.getElementById('capture-status');
-        statusDiv.innerText = "THINKING...";
+        statusDiv.innerText = "LOADING...";
         statusDiv.className = "status-thinking";
         try {
+            // Updated to load the specific model files provided
             if(!model) model = await tmImage.load("./model.json", "./metadata.json");
-            if(!webcam) { webcam = new tmImage.Webcam(448, 448, true); await webcam.setup(); document.getElementById("webcam-container").appendChild(webcam.canvas); }
-            await webcam.play(); isCamActive = true; window.requestAnimationFrame(loopCapture);
-        } catch(e) { alert("Camera Error"); showScreen('dashboard'); }
+            
+            if(!webcam) { 
+                webcam = new tmImage.Webcam(448, 448, true); 
+                await webcam.setup(); 
+                document.getElementById("webcam-container").innerHTML = ""; 
+                document.getElementById("webcam-container").appendChild(webcam.canvas); 
+            }
+            
+            await webcam.play(); 
+            isCamActive = true; 
+            window.requestAnimationFrame(loopCapture);
+        } catch(e) { 
+            console.error(e);
+            alert("Camera/Model Error. Please check your files."); 
+            showScreen('dashboard'); 
+        }
     }
 
     async function loopCapture() {
@@ -252,10 +265,16 @@
         webcam.update();
         const prediction = await model.predict(webcam.canvas);
         const statusDiv = document.getElementById('capture-status');
+        
         let best = { className: "", probability: 0 };
         prediction.forEach(p => { if(p.probability > best.probability) best = p; });
-        const isNothing = best.className.toLowerCase().includes("background") || best.className.toLowerCase().includes("nothing");
-        if(!isNothing && best.probability >= 0.75) {
+
+        // Logic check against "NO DETECTION" label in your metadata
+        const isNothing = best.className === "NO DETECTION" || 
+                          best.className.toLowerCase().includes("background") || 
+                          best.className.toLowerCase().includes("nothing");
+
+        if(!isNothing && best.probability >= 0.80) {
             statusDiv.innerText = "SIGN: " + best.className;
             statusDiv.className = "status-found";
         } else {
@@ -314,7 +333,7 @@
         quizBtn.style.background = "var(--locked-gray)"; quizBtn.innerText = "LOCK: WATCH ALL";
         quizBtn.style.cursor = "not-allowed"; quizBtn.style.boxShadow = "0 8px 0 #ccc";
         
-        const folder = getFolderPath(state.level); // REWORKED: Points 'advanced' to 'hard'
+        const folder = getFolderPath(state.level);
 
         for(let i=1; i<=DATA[state.level].videoCounts[m]; i++) {
             const card = document.createElement("div");
@@ -343,7 +362,7 @@
 
     function loadQuestion() {
         const q = state.randomizedSet[state.currentQuestionIndex];
-        const folder = getFolderPath(state.level); // REWORKED: Points 'advanced' to 'hard'
+        const folder = getFolderPath(state.level);
         document.getElementById("assessmentVideo").src = `videos/${folder}/module${state.currentModule}_test${q.vid}.mp4`;
         document.getElementById("assessmentVideo").play();
         document.getElementById("answerInput").value = ""; document.getElementById("answerInput").focus();
