@@ -85,7 +85,6 @@
         .capture-grid { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
         #webcam-container { width: 448px; height: 448px; background: #000; border-radius: 30px; border: 10px solid #333; overflow: hidden; }
         
-        /* UPDATED: Reference Box to accommodate internal dropdown */
         .reference-box { 
             width: 448px; height: 448px; background: #f9f9f9; 
             border-radius: 30px; border: 10px solid var(--sunny-yellow); 
@@ -258,6 +257,7 @@
 <script>
     const DATA = {
         beginner: { 
+            folder: "beginner",
             desc: "Start your journey!",
             titles: { 1: "Alphabet ABCs", 2: "Numbers 1-10", 3: "Basic Words" }, 
             videoCounts: { 1: 27, 2: 10, 3: 10 }, 
@@ -268,6 +268,7 @@
             } 
         },
         intermediate: { 
+            folder: "intermediate",
             desc: "Dive deeper!",
             titles: { 1: "Emotions", 2: "Greetings", 3: "Polite Expressions" }, 
             videoCounts: { 1: 10, 2: 10, 3: 10 }, 
@@ -278,6 +279,7 @@
             } 
         },
         advanced: { 
+            folder: "hard",
             desc: "Master the Magic!",
             titles: { 1: "Basic Phrases" }, 
             videoCounts: { 1: 10 }, 
@@ -324,12 +326,34 @@
         } catch(e) { alert("Camera Error"); showScreen('dashboard'); }
     }
 
+    // UPDATED RECOGNITION LOGIC TO IGNORE BACKGROUND/NO-HAND
     async function loopCapture() {
-        if(!isCamActive) return; webcam.update();
+        if(!isCamActive) return; 
+        webcam.update();
+        
         const prediction = await model.predict(webcam.canvas);
         let best = { className: "", probability: 0 };
-        prediction.forEach(p => { if(p.probability > best.probability) best = p; });
-        document.getElementById('capture-status').innerText = best.probability >= 0.75 ? "SIGN: " + best.className : "READY";
+        
+        prediction.forEach(p => { 
+            if(p.probability > best.probability) best = p; 
+        });
+
+        const statusDisplay = document.getElementById('capture-status');
+        
+        // Logical Fix: Check if "Background" or "Neutral" is the highest probability, or if overall confidence is too low.
+        // If the model is most confident in the background, we show "READY" (Waiting for hand).
+        const isBackground = best.className.toUpperCase().includes("BACKGROUND") || best.className.toUpperCase().includes("NEUTRAL");
+
+        if (isBackground || best.probability < 0.20) {
+            statusDisplay.innerText = "READY";
+        } else if (best.probability >= 0.75) {
+            statusDisplay.innerText = "MATCH FOUND: " + best.className;
+        } else if (best.probability >= 0.40) {
+            statusDisplay.innerText = "THINKING...";
+        } else {
+            statusDisplay.innerText = "READY";
+        }
+
         window.requestAnimationFrame(loopCapture);
     }
 
@@ -381,12 +405,13 @@
         const quizBtn = document.getElementById("assessmentBtn");
         quizBtn.style.background = "var(--locked-gray)"; quizBtn.innerText = "LOCK: WATCH ALL";
         
+        const folder = DATA[state.level].folder;
         for(let i=1; i<=DATA[state.level].videoCounts[m]; i++) {
             const card = document.createElement("div");
             card.style = "background:white; border-radius:15px; margin-bottom:10px; padding:15px; display:flex; justify-content:space-between; border:3px solid #eee; cursor:pointer;";
             card.innerHTML = `<span>Lesson ${i}</span> <span id="vs-${i}">PENDING</span>`;
             card.onclick = () => {
-                document.getElementById("videoPlayer").src = `videos/${state.level}/module${m}_video${i}.mp4`;
+                document.getElementById("videoPlayer").src = `videos/${folder}/module${m}_video${i}.mp4`;
                 document.getElementById("videoPlayer").play();
                 document.getElementById(`vs-${i}`).innerText = "DONE";
                 state.watchedItems.add(i);
@@ -408,7 +433,8 @@
 
     function loadQuestion() {
         const q = state.randomizedSet[state.currentQuestionIndex];
-        document.getElementById("assessmentVideo").src = `videos/${state.level}/module${state.currentModule}_test${q.vid}.mp4`;
+        const folder = DATA[state.level].folder;
+        document.getElementById("assessmentVideo").src = `videos/${folder}/module${state.currentModule}_test${q.vid}.mp4`;
         document.getElementById("assessmentVideo").play();
         document.getElementById("answerInput").value = ""; document.getElementById("answerInput").focus();
     }
